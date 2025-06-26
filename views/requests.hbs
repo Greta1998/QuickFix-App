@@ -1,0 +1,27 @@
+{{#if (eq role "homeowner")}}
+    {{#each requests}}
+        <div class="card mb-3">
+            <div class="card-body">
+                <strong>{{appliance}}</strong> — Status: <span class="badge badge-info">{{status}}</span>
+                <br><small>Technician: {{technicianEmail}}</small>
+            </div>
+        </div>
+    {{/each}}
+
+{{else if (eq role "technician")}}
+    {{#each requests}}
+        <div class="card mb-3">
+            <div class="card-body">
+                <strong>{{appliance}}</strong> — Status: <span class="badge badge-info">{{status}}</span>
+                <br><small>Homeowner: {{homeownerEmail}}</small>
+
+                {{#if (eq status "Accepted")}}
+                    <form action="/complete" method="POST">
+                        <input type="hidden" name="requestId" value="{{id}}">
+                        <button class="btn btn-success mt-2">Mark as Completed</button>
+                    </form>
+                {{/if}}
+            </div>
+        </div>
+    {{/each}}
+{{/if}}

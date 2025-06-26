@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/style.css"> 
+</head>
+<body>
+    <div class="container mt-5" style="max-width: 400px;">
+        <h2 class="text-center mb-4">LOG IN</h2>
+        <form action="/login" method="POST" class="bg-light p-4 rounded shadow">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">LOG IN</button>
+        </form>
+        <p class="text-center mt-3">Don't have an account? <a href="/signup">Create one here</a></p>
+    </div>
+</body>
+</html>

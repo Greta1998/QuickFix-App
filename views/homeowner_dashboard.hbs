@@ -1,0 +1,33 @@
+<div class="container mt-5" style="max-width: 500px;"> 
+    <h2 class="text-center mb-4">Select Appliance for Repair</h2>
+    <div class="card"> 
+        <div class="card-body"> 
+            <form action="/request" method="POST" class="mb-4">
+                <div class="form-group">
+                    <label for="appliance">Select Appliance</label>
+                    <select name="appliance" class="form-control" id="appliance">
+                        <option value="fridge">Fridge</option>
+                        <option value="washing_machine">Washing Machine</option>
+                        <option value="blender">Blender</option>
+                        <option value="cooker">Cooker</option>
+                        <option value="oven">Oven</option>
+                        <option value="ac">Air Conditioner</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="technician">Select Technician</label>
+                    <select name="technician" class="form-control" id="technician">
+                        {{#each technicians}}
+                            <option value="{{this.email}}">{{this.name}}</option>
+                        {{/each}}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-block">Request Technician</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

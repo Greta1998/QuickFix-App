@@ -1,0 +1,15 @@
+<div class="container mt-5" style="max-width: 600px;"> 
+    <h2 class="text-center mb-4">Pending Requests</h2>
+    {{#each requests}}
+        <div class="card mb-3"> 
+            <div class="card-body">
+                <p class="card-text">{{this.appliance}} requested by {{this.homeownerEmail}}</p>
+                <form action="/respond" method="POST" class="d-flex justify-content-end"> <!-- Align buttons to the right -->
+                    <input type="hidden" name="requestId" value="{{this.id}}">
+                    <button type="submit" name="status" value="Accepted" class="btn btn-success me-2">Accept</button> <!-- Add margin-end for spacing -->
+                    <button type="submit" name="status" value="Rejected" class="btn btn-danger">Reject</button>
+                </form>
+            </div>
+        </div>
+    {{/each}}
+</div>
