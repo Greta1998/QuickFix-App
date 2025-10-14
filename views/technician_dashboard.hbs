@@ -169,7 +169,7 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">Performance Summary</h5>
                 </div>
-                <div class="card-body">
+            <div class="card-body">
                     <div class="row text-center">
                         <div class="col-6 mb-3">
                             <div class="border-end">
@@ -257,11 +257,11 @@
                                             <td>{{formatDate this.timestamp}}</td>
                                             <td>
                                                 <form action="/complete" method="POST" style="display: inline;">
-                                                    <input type="hidden" name="requestId" value="{{this.id}}">
+                    <input type="hidden" name="requestId" value="{{this.id}}">
                                                     <button type="submit" class="btn btn-success btn-sm">
                                                         <i class="bi bi-check-circle me-1"></i>Mark Complete
                                                     </button>
-                                                </form>
+                </form>
                                             </td>
                                         </tr>
                                     {{/each}}
@@ -353,8 +353,8 @@
                     {{/if}}
                 </div>
             </div>
+            </div>
         </div>
-    </div>
 </div>
 
 <!-- Chart.js CDN -->

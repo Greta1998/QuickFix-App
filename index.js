@@ -181,7 +181,7 @@ app.post("/signup", async (req, res) => {
             });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
         if (role === 'technician') {
             // Validate technician-specific fields
@@ -271,7 +271,7 @@ app.post('/login', async (req, res) => {
         }
         
         console.log('Querying Firebase for user:', email);
-        const snapshot = await db.ref("users").orderByChild("email").equalTo(email).once("value");
+    const snapshot = await db.ref("users").orderByChild("email").equalTo(email).once("value");
         console.log('User exists in users table:', snapshot.exists());
         if (snapshot.exists()) {
             const userData = Object.values(snapshot.val())[0];
@@ -280,24 +280,24 @@ app.post('/login', async (req, res) => {
             console.log('No user found in database');
         }
 
-        if (snapshot.exists()) {
-            const userData = Object.values(snapshot.val())[0];
-            const match = await bcrypt.compare(password, userData.password);
+    if (snapshot.exists()) {
+        const userData = Object.values(snapshot.val())[0];
+        const match = await bcrypt.compare(password, userData.password);
             console.log('Password match:', match);
 
-            if (match) {
+        if (match) {
                 console.log('User login successful, role:', userData.role);
-                req.session.user = { email, role: userData.role };
-                if (userData.role === "technician") {
+            req.session.user = { email, role: userData.role };
+            if (userData.role === "technician") {
                     return res.json({ success: true, redirect: "/technician-dashboard" });
-                } else {
-                    return res.json({ success: true, redirect: "/homeowner-dashboard" });
-                }
             } else {
-                console.log('Incorrect password for user:', email);
-                return res.json({ success: false, message: "Incorrect password" });
+                    return res.json({ success: true, redirect: "/homeowner-dashboard" });
             }
         } else {
+                console.log('Incorrect password for user:', email);
+                return res.json({ success: false, message: "Incorrect password" });
+        }
+    } else {
             // Check if there's a pending technician application
             console.log('User not found in users table, checking applications...');
             const appSnapshot = await db.ref("technician_applications").orderByChild("email").equalTo(email).once("value");
@@ -1163,10 +1163,10 @@ app.post("/rate", async (req, res) => {
     // Store rating in a separate ratings collection
     await db.ref("ratings").push({
       technicianEmail: technicianId,
-      rating: Number(rating),
+        rating: Number(rating),
       requestId: requestId,
       timestamp: Date.now()
-    });
+      });
 
     // Mark request as rated
     await db.ref("requests").child(requestId).update({ rated: true });
