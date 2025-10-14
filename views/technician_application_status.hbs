@@ -1,0 +1,185 @@
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-file-earmark-person me-2"></i>Application Status</h4>
+                </div>
+                <div class="card-body">
+                    {{#if application}}
+                        <!-- Application Status Card -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card {{#if (eq application.status 'Approved')}}border-success{{else if (eq application.status 'Rejected')}}border-danger{{else}}border-warning{{/if}}">
+                                    <div class="card-body text-center">
+                                        {{#if (eq application.status 'Pending')}}
+                                            <i class="bi bi-hourglass-split display-1 text-warning"></i>
+                                            <h3 class="text-warning">Application Under Review</h3>
+                                            <p class="text-muted">Your application is currently being reviewed by our admin team.</p>
+                                        {{else if (eq application.status 'Approved')}}
+                                            <i class="bi bi-check-circle display-1 text-success"></i>
+                                            <h3 class="text-success">Application Approved!</h3>
+                                            <p class="text-muted">Congratulations! Your application has been approved. You can now log in to your technician account.</p>
+                                        {{else if (eq application.status 'Rejected')}}
+                                            <i class="bi bi-x-circle display-1 text-danger"></i>
+                                            <h3 class="text-danger">Application Rejected</h3>
+                                            <p class="text-muted">Unfortunately, your application was not approved at this time.</p>
+                                        {{/if}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Application Details -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h5 class="mb-3">Application Details</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>Name:</strong></td>
+                                                <td>{{application.name}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Email:</strong></td>
+                                                <td>{{application.email}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Phone:</strong></td>
+                                                <td>{{application.phone}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Location:</strong></td>
+                                                <td>{{application.location}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Specialty:</strong></td>
+                                                <td>{{application.specialty}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Experience:</strong></td>
+                                                <td>{{application.experience}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Availability:</strong></td>
+                                                <td>{{application.availability}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Service Radius:</strong></td>
+                                                <td>{{application.serviceRadius}} km</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Applied On:</strong></td>
+                                                <td>{{formatDate application.timestamp}}</td>
+                                            </tr>
+                                            {{#if application.decisionTimestamp}}
+                                                <tr>
+                                                    <td><strong>Decision Date:</strong></td>
+                                                    <td>{{formatDate application.decisionTimestamp}}</td>
+                                                </tr>
+                                            {{/if}}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bio Section -->
+                        {{#if application.bio}}
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h5 class="mb-3">Professional Bio</h5>
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <p class="mb-0">{{application.bio}}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {{/if}}
+
+                        <!-- Certifications Section -->
+                        {{#if application.certifications}}
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h5 class="mb-3">Certifications & Qualifications</h5>
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <p class="mb-0">{{application.certifications}}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {{/if}}
+
+                        <!-- Action Buttons -->
+                        <div class="row mt-4">
+                            <div class="col-12 text-center">
+                                {{#if (eq application.status 'Approved')}}
+                                    <a href="/login" class="btn btn-success btn-lg">
+                                        <i class="bi bi-box-arrow-in-right me-2"></i>Login to Your Account
+                                    </a>
+                                {{else if (eq application.status 'Rejected')}}
+                                    <a href="/technician-signup" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-arrow-clockwise me-2"></i>Submit New Application
+                                    </a>
+                                {{else}}
+                                    <button class="btn btn-outline-primary btn-lg" onclick="checkStatus()">
+                                        <i class="bi bi-arrow-clockwise me-2"></i>Refresh Status
+                                    </button>
+                                {{/if}}
+                            </div>
+                        </div>
+
+                    {{else}}
+                        <!-- No Application Found -->
+                        <div class="text-center py-5">
+                            <i class="bi bi-file-earmark-x display-1 text-muted"></i>
+                            <h3 class="text-muted mt-3">No Application Found</h3>
+                            <p class="text-muted">We couldn't find an application with this email address.</p>
+                            <a href="/technician-signup" class="btn btn-primary btn-lg">
+                                <i class="bi bi-plus-circle me-2"></i>Submit New Application
+                            </a>
+                        </div>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function checkStatus() {
+    // Refresh the page to check for status updates
+    window.location.reload();
+}
+</script>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.display-1 {
+    font-size: 4rem;
+    opacity: 0.8;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.border-success {
+    border-color: #28a745 !important;
+}
+
+.border-danger {
+    border-color: #dc3545 !important;
+}
+
+.border-warning {
+    border-color: #ffc107 !important;
+}
+</style>

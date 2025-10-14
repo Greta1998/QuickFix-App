@@ -1,46 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuickFix</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="styles.css"> 
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{{title}}}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <style>
+    .main-row { height: calc(100vh - 56px); }
+  </style>
 </head>
-<body>
-    <!-- Header Navbar -->
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-            <a class="navbar-brand" href="#">QuickFix</a>
-            <a class="nav-link text-white ml-3" href="/requests">View Requests</a>
-            <a class="nav-link text-white ml-3" href="/notifications">Notifications</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <div class="navbar-nav ml-auto">
-                    <a class="nav-link text-white" href="#logout">Logout</a>
-                </div>
-            </div>
-        </nav>
-    </header>
+<body class="bg-light">
+  <nav class="navbar navbar-light bg-white border-bottom">
+    <div class="container-fluid">
+     <a class="navbar-brand" href="#">
+        <i class="bi bi-wrench-adjustable text-primary"></i>
+        <strong class= "text-primary">QuickFix</strong>
+      </a>
 
-    <!-- Main Content -->
-    <main class="container mt-4">
-        {{{body}}}
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-primary text-white text-center py-4">
-        <div class="container">
-            <p>Contact us: <a href="mailto:info@quickfix.com" class="text-white">info@quickfix.com</a></p>
-            <p>Address: USIU road, Off Thika Road</p>
+      <div class="d-flex align-items-center">
+        <button class="btn btn-light me-3">
+          <i class="bi bi-bell"></i>
+        </button>
+        <div class="dropdown">
+          <a
+            class="btn btn-light dropdown-toggle"
+            href="#"
+            data-bs-toggle="dropdown"
+          ><i class="bi bi-person-circle fs-4"></i></a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="/logout">Logout</a></li>
+          </ul>
         </div>
-    </footer>
+      </div>
+    </div>
+  </nav>
 
-    
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <div class="container-fluid">
+    <div class="row gx-0 main-row">
+      <aside class="col-12 col-md-2 bg-white border-end p-3">
+        <nav class="nav flex-column">
+          {{#if (eq currentUserRole 'homeowner')}}
+            <!-- Homeowner Links -->
+            <a class="nav-link {{#if (eq active 'homeowner')}}fw-bold text-primary{{else}}text-dark{{/if}}" href="/homeowner-dashboard" >
+              <i class="bi bi-graph-up me-2"></i> Dashboard
+            </a>
+            <a class="nav-link {{#if (eq active 'request-repair')}}fw-bold text-primary{{else}}text-dark{{/if}}" href="/request-repair" >
+              <i class="bi bi-tools me-2"></i> Request Repair
+            </a>
+            <a
+              class="nav-link d-flex align-items-center justify-content-between {{#if (eq active 'rate')}}fw-bold text-primary{{else}}text-dark{{/if}}"
+              href="/rate"
+            >
+              <span><i class="bi bi-stars me-2"></i> Rate Technician</span>
+              {{#if pendingRatingsCount}}
+                <span class="badge bg-danger rounded-pill">{{pendingRatingsCount}}</span>
+              {{/if}}
+            </a>
+            <a
+              class="nav-link {{#if (eq active 'chat')}}fw-bold text-primary{{else}}text-dark{{/if}}"
+              href="/chat"
+            >
+              <span><i class="bi bi-chat-dots me-2"></i> Chat</span>
+              {{#if unreadChatCount}}
+                <span class="badge bg-danger rounded-pill">{{unreadChatCount}}</span>
+              {{/if}}
+            </a>
+            <a
+              class="nav-link d-flex align-items-center justify-content-between {{#if (eq active 'payment')}}fw-bold text-primary{{else}}text-dark{{/if}}"
+              href="/payment"
+            >
+              <span><i class="bi bi-credit-card me-2"></i> Payment</span>
+              {{#if pendingPaymentsCount}}
+                <span class="badge bg-danger rounded-pill">{{pendingPaymentsCount}}</span>
+              {{/if}}
+            </a>
+          {{else if (eq currentUserRole 'technician')}}
+            <!-- Technician Links -->
+            <a
+              class="nav-link {{#if (eq active 'technician')}}fw-bold text-primary{{else}}text-dark{{/if}}"
+              href="/technician-dashboard"
+            >
+              <i class="bi bi-graph-up me-2"></i> Dashboard
+            </a>
+            <a
+              class="nav-link {{#if (eq active 'manage-requests')}}fw-bold text-primary{{else}}text-dark{{/if}}"
+              href="/manage-requests"
+            >
+              <i class="bi bi-tools me-2"></i> Manage Requests
+            </a>
+            <a
+              class="nav-link {{#if (eq active 'chat')}}fw-bold text-primary{{else}}text-dark{{/if}}"
+              href="/chat"
+            >
+              <span><i class="bi bi-chat-dots me-2"></i> Chat</span>
+              {{#if unreadChatCount}}
+                <span class="badge bg-danger rounded-pill">{{unreadChatCount}}</span>
+              {{/if}}
+            </a>
+          {{else if (eq currentUserRole 'admin')}}
+            <!-- Admin Links -->
+            <a
+              class="nav-link {{#if (eq active 'admin')}}fw-bold text-primary{{else}}text-dark{{/if}}"
+              href="/admin"
+            >
+              <i class="bi bi-graph-up me-2"></i> Dashboard
+            </a>
+            <a
+              class="nav-link d-flex align-items-center justify-content-between {{#if (eq active 'manage-applications')}}fw-bold text-primary{{else}}text-dark{{/if}}"
+              href="/manage-applications"
+            >
+              <span><i class="bi bi-people me-2"></i> Manage Applications</span>
+              {{#if pendingApplicationsCount}}
+                <span class="badge bg-danger rounded-pill">{{pendingApplicationsCount}}</span>
+              {{/if}}
+            </a>
+          {{/if}}
+        </nav>
+      </aside>
+
+      <main class="col d-flex flex-column p-4 overflow-auto">
+        {{{body}}}
+      </main>
+
+    </div>
+  </div>
+
+  <!-- Bootstrap JS bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

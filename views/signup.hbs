@@ -3,34 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="styles.css"> 
+    <link rel="stylesheet" href="/styles.css"> 
 </head>
 <body>
-<div class="container mt-5">
-    <h2 class="text-center mb-4">Sign Up</h2>
-    <form action="/signup" method="POST" class="bg-light p-4 rounded shadow">
-        <div class="form-group">
-            <label for="name">Full Name</label>
-            <input type="text" name="name" class="form-control" id="name" placeholder="Full Name" required>
+    <div class="container mt-5" style="max-width: 400px;">
+        <h2 class="text-center mb-4">SIGN UP</h2>
+        
+        <div class="alert alert-info" id="technicianInfo" style="display: none;">
+            <small><strong>Technician Application:</strong> Additional information required for verification.</small>
         </div>
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" name="email" class="form-control" id="email" placeholder="Email" required>
-        </div>
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" name="password" class="form-control" id="password" placeholder="Password" required>
-        </div>
-        <div class="form-group">
-            <label for="role">Role</label>
-            <select name="role" class="form-control" id="role">
-                <option value="homeowner">Homeowner</option>
-                <option value="technician">Technician</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
-    </form>
-</div>
+
+        <form action="/signup" method="POST" id="signupForm" class="bg-light p-4 rounded shadow">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" name="name" class="form-control" id="name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" name="email" class="form-control" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" name="password" class="form-control" id="password" required>
+            </div>
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select name="role" class="form-control" id="role" required>
+                    <option value="">Select your role...</option>
+                    <option value="homeowner">Homeowner</option>
+                    <option value="technician">Technician</option>
+                </select>
+            </div>
+
+            <!-- Technician-specific fields (hidden by default) -->
+            <div id="technicianFields" style="display: none;">
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="07XXXXXXXX">
+                </div>
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input type="text" class="form-control" id="location" name="location" placeholder="e.g., Nairobi, Westlands">
+                </div>
+                <div class="form-group">
+                    <label for="specialty">Specialization</label>
+                    <select class="form-control" id="specialty" name="specialty">
+                        <option value="">Select specialization...</option>
+                        <option value="appliance_repair">General Appliance Repair</option>
+                        <option value="refrigeration">Refrigeration & AC</option>
+                        <option value="electrical">Electrical Appliances</option>
+                        <option value="plumbing">Plumbing Appliances</option>
+                        <option value="kitchen_appliances">Kitchen Appliances</option>
+                        <option value="laundry_appliances">Laundry Appliances</option>
+                        <option value="electronics">Electronics & Gadgets</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="experience">Experience</label>
+                    <select class="form-control" id="experience" name="experience">
+                        <option value="">Select experience...</option>
+                        <option value="0-1">0-1 years</option>
+                        <option value="2-3">2-3 years</option>
+                        <option value="4-6">4-6 years</option>
+                        <option value="7-10">7-10 years</option>
+                        <option value="10+">10+ years</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="bio">Professional Bio</label>
+                    <textarea class="form-control" id="bio" name="bio" rows="3" placeholder="Tell us about your experience and skills..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="idNumber">ID Number</label>
+                    <input type="text" class="form-control" id="idNumber" name="idNumber" placeholder="Enter your ID number">
+                </div>
+                <div class="form-group">
+                    <label for="availability">Availability</label>
+                    <select class="form-control" id="availability" name="availability">
+                        <option value="">Select availability...</option>
+                        <option value="full_time">Full Time</option>
+                        <option value="part_time">Part Time</option>
+                        <option value="weekends">Weekends Only</option>
+                        <option value="evenings">Evenings Only</option>
+                        <option value="emergency">Emergency Services</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="serviceRadius">Service Radius (km)</label>
+                    <select class="form-control" id="serviceRadius" name="serviceRadius">
+                        <option value="">Select radius...</option>
+                        <option value="5">5 km</option>
+                        <option value="10">10 km</option>
+                        <option value="15">15 km</option>
+                        <option value="20">20 km</option>
+                        <option value="25">25 km</option>
+                        <option value="30+">30+ km</option>
+                    </select>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="terms" name="terms">
+                    <label class="form-check-label" for="terms">
+                        <small>I agree to the Terms and Conditions</small>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="submitBtn">SIGN UP</button>
+        </form>
+        <p class="text-center mt-3">Already have an account? <a href="/login">Log in here</a></p>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('role');
+    const technicianFields = document.getElementById('technicianFields');
+    const technicianInfo = document.getElementById('technicianInfo');
+    const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('signupForm');
+
+    // Show/hide technician fields based on role selection
+    roleSelect.addEventListener('change', function() {
+        if (this.value === 'technician') {
+            technicianFields.style.display = 'block';
+            technicianInfo.style.display = 'block';
+            submitBtn.innerHTML = 'SUBMIT APPLICATION';
+        } else {
+            technicianFields.style.display = 'none';
+            technicianInfo.style.display = 'none';
+            submitBtn.innerHTML = 'SIGN UP';
+        }
+    });
+
+    // Form submission handling
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn ? submitBtn.textContent : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'PROCESSING...';
+        }
+
+        try {
+            const formData = new URLSearchParams();
+            for (const pair of new FormData(form)) {
+                formData.append(pair[0], pair[1]);
+            }
+
+            const res = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData
+            });
+
+            const result = await res.json();
+            
+            if (result.success) {
+                if (roleSelect.value === 'technician') {
+                    alert('Application submitted successfully! You will be notified once reviewed.');
+                } else {
+                    alert('Account created successfully! You can now log in.');
+                }
+                form.reset();
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 1500);
+            } else {
+                alert(result.error || 'Failed to create account. Please try again.');
+            }
+
+        } catch (err) {
+            console.error('Submit failed:', err);
+            alert('Failed to create account. Please try again.');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+    });
+});
+</script>
 </body>
 </html>

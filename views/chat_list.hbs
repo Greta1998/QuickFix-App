@@ -1,0 +1,18 @@
+<h3>Your Conversations</h3>
+<ul class="list-group">
+  {{#each conversations}}
+    <li class="list-group-item d-flex justify-content-between align-items-center {{#if unread}}bg-light border-primary{{/if}}">
+      <a href="/messages/{{id}}" class="text-decoration-none {{#if unread}}fw-bold text-primary{{/if}}">
+        {{appliance}} (with 
+        {{#if (eq ../userEmail technicianEmail)}}
+          {{homeownerEmail}}
+        {{else}}
+          {{technicianEmail}}
+        {{/if}})
+      </a>
+      {{#if unread}}
+        <span class="badge bg-danger rounded-pill">New</span>
+      {{/if}}
+    </li>
+  {{/each}}
+</ul>

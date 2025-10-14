@@ -1,0 +1,381 @@
+<h2 class="mb-4">Pending Payments</h2>
+
+{{#if unpaid.length}}
+  <ul class="list-group mb-4">
+    {{#each unpaid}}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          <div><strong>{{appliance}}</strong></div>
+          <small class="text-muted">Technician: {{technicianEmail}}</small>
+        </div>
+        <button type="button"
+                class="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#payModal"
+                data-request-id="{{id}}">
+          Pay
+        </button>
+      </li>
+    {{/each}}
+  </ul>
+{{else}}
+  <div class="alert alert-success">No payments pending. 🎉</div>
+{{/if}}
+
+<!-- Payment Options Modal -->
+<div class="modal fade" id="payModal" tabindex="-1" aria-labelledby="payModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="payModalLabel">Choose Payment Method</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="payForm" action="/pay" method="POST">
+          <input type="hidden" name="requestId" id="payRequestId" value="" />
+          <input type="hidden" name="method" id="payMethod" value="" />
+
+          <div class="d-grid gap-2">
+            <button type="button" class="btn btn-outline-primary pay-option" data-method="Visa">
+              <i class="bi bi-credit-card me-2"></i> Visa
+            </button>
+            <button type="button" class="btn btn-outline-success pay-option" data-method="Mpesa" data-bs-toggle="modal" data-bs-target="#mpesaModal">
+              <i class="bi bi-phone me-2"></i> M-Pesa
+            </button>
+            <button type="button" class="btn btn-outline-secondary pay-option" data-method="Cash">
+              <i class="bi bi-cash-coin me-2"></i> Cash
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+ </div>
+
+<!-- M-Pesa Payment Modal -->
+<div class="modal fade" id="mpesaModal" tabindex="-1" aria-labelledby="mpesaModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="mpesaModalLabel">M-Pesa Payment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="mpesaForm">
+          <input type="hidden" name="requestId" id="mpesaRequestId" value="" />
+          
+          <div class="mb-3">
+            <label for="phoneNumber" class="form-label">Phone Number</label>
+            <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" 
+                   placeholder="07XXXXXXXX or 254XXXXXXXXX" required>
+            <div class="form-text">Enter your M-Pesa registered phone number</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="amount" class="form-label">Amount (KES)</label>
+            <input type="number" class="form-control" id="amount" name="amount" 
+                   min="1" step="1" required>
+            <div class="form-text">Enter the amount to pay</div>
+          </div>
+          
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            You will receive an M-Pesa prompt on your phone to enter your PIN
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-warning me-2" id="testFormData">
+          <i class="bi bi-bug me-2"></i> Test Form Data
+        </button>
+        <button type="button" class="btn btn-success" id="initiateMpesaPayment">
+          <i class="bi bi-phone me-2"></i> Pay with M-Pesa
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Status Modal -->
+<div class="modal fade" id="paymentStatusModal" tabindex="-1" aria-labelledby="paymentStatusModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="paymentStatusModalLabel">Payment Status</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <div id="paymentStatusContent">
+          <!-- Status content will be loaded here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    const payModal = document.getElementById('payModal');
+    const mpesaModal = document.getElementById('mpesaModal');
+    const paymentStatusModal = document.getElementById('paymentStatusModal');
+    const payRequestIdInput = document.getElementById('payRequestId');
+    const mpesaRequestIdInput = document.getElementById('mpesaRequestId');
+    const payMethodInput = document.getElementById('payMethod');
+    const payForm = document.getElementById('payForm');
+    const mpesaForm = document.getElementById('mpesaForm');
+    const initiateMpesaBtn = document.getElementById('initiateMpesaPayment');
+    const testFormBtn = document.getElementById('testFormData');
+
+    // Handle payment modal
+    if (payModal) {
+      payModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const requestId = button?.getAttribute('data-request-id') || '';
+        payRequestIdInput.value = requestId;
+        mpesaRequestIdInput.value = requestId;
+        payMethodInput.value = '';
+      });
+    }
+
+    // Handle M-Pesa modal
+    if (mpesaModal) {
+      mpesaModal.addEventListener('show.bs.modal', function (event) {
+        const requestId = payRequestIdInput.value;
+        mpesaRequestIdInput.value = requestId;
+        
+        // Reset form but preserve the requestId
+        mpesaForm.reset();
+        mpesaRequestIdInput.value = requestId;
+        
+        // Clear any previous error messages
+        const errorAlerts = mpesaModal.querySelectorAll('.alert-danger');
+        errorAlerts.forEach(alert => alert.remove());
+      });
+    }
+
+    // Handle payment options (Visa and Cash)
+    document.querySelectorAll('.pay-option').forEach(btn => {
+      btn.addEventListener('click', function(){
+        const method = this.getAttribute('data-method');
+        if (method !== 'Mpesa') {
+          payMethodInput.value = method;
+          payForm.submit();
+        }
+      });
+    });
+
+    // Test form data button
+    if (testFormBtn) {
+      testFormBtn.addEventListener('click', function() {
+        const formData = new FormData(mpesaForm);
+        const phoneNumber = formData.get('phoneNumber');
+        const amount = formData.get('amount');
+        let requestId = formData.get('requestId');
+        
+        // Fallback methods
+        if (!requestId) {
+          requestId = document.getElementById('mpesaRequestId').value;
+        }
+        if (!requestId) {
+          requestId = document.getElementById('payRequestId').value;
+        }
+
+        const debugInfo = {
+          formData: {
+            phoneNumber: phoneNumber,
+            amount: amount,
+            requestId: requestId
+          },
+          directValues: {
+            mpesaRequestId: document.getElementById('mpesaRequestId').value,
+            payRequestId: document.getElementById('payRequestId').value,
+            phoneNumberInput: document.getElementById('phoneNumber').value,
+            amountInput: document.getElementById('amount').value
+          },
+          validation: {
+            hasPhoneNumber: !!phoneNumber,
+            hasAmount: !!amount,
+            hasRequestId: !!requestId,
+            allFieldsPresent: !!(phoneNumber && amount && requestId)
+          }
+        };
+
+        console.log('=== FORM DEBUG INFO ===');
+        console.log(debugInfo);
+        alert(`Form Data Test:\n\nPhone: ${phoneNumber || 'MISSING'}\nAmount: ${amount || 'MISSING'}\nRequest ID: ${requestId || 'MISSING'}\n\nCheck console for full details.`);
+      });
+    }
+
+    // Handle M-Pesa payment initiation
+    if (initiateMpesaBtn) {
+      initiateMpesaBtn.addEventListener('click', async function() {
+        const formData = new FormData(mpesaForm);
+        const phoneNumber = formData.get('phoneNumber');
+        const amount = formData.get('amount');
+        let requestId = formData.get('requestId');
+        
+        // Fallback: get requestId from the hidden input directly
+        if (!requestId) {
+          requestId = document.getElementById('mpesaRequestId').value;
+        }
+        
+        // Another fallback: get from the main payment form
+        if (!requestId) {
+          requestId = document.getElementById('payRequestId').value;
+        }
+
+        // Debug logging
+        console.log('Form data:', {
+          phoneNumber: phoneNumber,
+          amount: amount,
+          requestId: requestId,
+          mpesaRequestIdValue: document.getElementById('mpesaRequestId').value,
+          payRequestIdValue: document.getElementById('payRequestId').value
+        });
+
+        if (!phoneNumber || !amount || !requestId) {
+          const missingFields = [];
+          if (!phoneNumber) missingFields.push('Phone Number');
+          if (!amount) missingFields.push('Amount');
+          if (!requestId) missingFields.push('Request ID');
+          
+          alert(`Please fill in: ${missingFields.join(', ')}`);
+          return;
+        }
+
+        // Validate phone number format
+        const phoneRegex = /^(07\d{8}|2547\d{8})$/;
+        if (!phoneRegex.test(phoneNumber.replace(/\s/g, ''))) {
+          alert('Please enter a valid phone number (07XXXXXXXX or 254XXXXXXXXX)');
+          return;
+        }
+
+        // Show loading state
+        initiateMpesaBtn.disabled = true;
+        initiateMpesaBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
+        try {
+          const response = await fetch('/mpesa/pay', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              requestId: requestId,
+              phoneNumber: phoneNumber,
+              amount: parseFloat(amount)
+            })
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            // Close M-Pesa modal
+            const mpesaModalInstance = bootstrap.Modal.getInstance(mpesaModal);
+            mpesaModalInstance.hide();
+
+            // Show payment status modal
+            showPaymentStatus('success', result.message || 'Payment initiated successfully! Please check your phone for M-Pesa prompt.');
+            
+            // Start polling for payment status
+            pollPaymentStatus(result.checkoutRequestID);
+          } else {
+            showPaymentStatus('error', result.error || 'Payment initiation failed. Please try again.');
+          }
+        } catch (error) {
+          console.error('Payment error:', error);
+          showPaymentStatus('error', 'Network error. Please check your connection and try again.');
+        } finally {
+          // Reset button state
+          initiateMpesaBtn.disabled = false;
+          initiateMpesaBtn.innerHTML = '<i class="bi bi-phone me-2"></i> Pay with M-Pesa';
+        }
+      });
+    }
+
+    // Show payment status modal
+    function showPaymentStatus(type, message) {
+      const statusContent = document.getElementById('paymentStatusContent');
+      const icon = type === 'success' ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger';
+      const title = type === 'success' ? 'Payment Initiated' : 'Payment Failed';
+      
+      statusContent.innerHTML = `
+        <i class="bi ${icon} display-4 mb-3"></i>
+        <h5>${title}</h5>
+        <p>${message}</p>
+        ${type === 'success' ? '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Waiting for payment...</span></div>' : ''}
+      `;
+      
+      const statusModal = new bootstrap.Modal(paymentStatusModal);
+      statusModal.show();
+    }
+
+    // Poll payment status
+    async function pollPaymentStatus(checkoutRequestID) {
+      let attempts = 0;
+      const maxAttempts = 20; // Poll for 3 minutes (20 * 9 seconds)
+      
+      const poll = async () => {
+        if (attempts >= maxAttempts) {
+          showPaymentStatus('error', 'Payment timeout. Please check your M-Pesa transaction history or try again.');
+          return;
+        }
+
+        try {
+          console.log(`Polling payment status (attempt ${attempts + 1}/${maxAttempts})`);
+          const response = await fetch(`/mpesa/status/${checkoutRequestID}`);
+          const result = await response.json();
+
+          console.log('Payment status result:', result);
+
+          if (result.success && result.resultCode === '0') {
+            // Payment successful
+            showPaymentStatus('success', 'Payment completed successfully! Redirecting...');
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          } else if (result.success && result.resultCode === '1032') {
+            // User cancelled
+            showPaymentStatus('error', 'Payment was cancelled. Please try again.');
+          } else if (result.success && result.resultCode === '1037') {
+            // Timeout
+            showPaymentStatus('error', 'Payment timeout. Please try again.');
+          } else if (result.success && result.resultCode === '1031') {
+            // Request cancelled by user
+            showPaymentStatus('error', 'Payment was cancelled. Please try again.');
+          } else if (result.success && result.resultCode === '1') {
+            // Still pending, continue polling
+            attempts++;
+            console.log(`Payment still pending, continuing to poll... (${attempts}/${maxAttempts})`);
+            setTimeout(poll, 9000); // Poll every 9 seconds
+          } else {
+            // Unknown status, continue polling
+            attempts++;
+            console.log(`Unknown payment status: ${result.resultCode}, continuing to poll... (${attempts}/${maxAttempts})`);
+            setTimeout(poll, 9000);
+          }
+        } catch (error) {
+          console.error('Status check error:', error);
+          attempts++;
+          if (attempts < maxAttempts) {
+            setTimeout(poll, 9000);
+          } else {
+            showPaymentStatus('error', 'Unable to check payment status. Please check your M-Pesa transaction history.');
+          }
+        }
+      };
+
+      // Start polling after 3 seconds
+      setTimeout(poll, 3000);
+    }
+  })();
+ </script>
+
+

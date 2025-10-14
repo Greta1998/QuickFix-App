@@ -1,0 +1,187 @@
+<style>
+  .message-container {
+    margin-bottom: 8px;
+    width: 100%;
+  }
+  
+  .message-bubble {
+    padding: 8px 12px;
+    border-radius: 18px;
+    position: relative;
+    word-wrap: break-word;
+    box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+    display: inline-block;
+    max-width: 100%;
+  }
+  
+  .own-message {
+    background-color: #007bff;
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+  
+  .other-message {
+    background-color: #e9ecef;
+    color: #333;
+    border-bottom-left-radius: 4px;
+  }
+  
+  .message-text {
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 2px;
+  }
+  
+  .message-time {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: right;
+    margin-top: 2px;
+  }
+  
+  .other-message .message-time {
+    text-align: left;
+    color: #6c757d;
+  }
+</style>
+
+<div class="card">
+  <div class="card-header">
+    Chat about request {{requestId}}
+    <a href="/chat" class="btn btn-sm btn-outline-secondary float-end">Back to all conversations</a>
+  </div>
+
+  <div class="card-body" id="chatBox" 
+       style="height: 400px; overflow-y: auto; background: #f8f9fa; padding: 15px;">
+    <!-- Messages will appear here -->
+  </div>
+
+  <div class="card-footer d-flex">
+    <input id="msgInput"
+           class="form-control me-2"
+           type="text"
+           placeholder="Type a message…" autocomplete="off">
+    <button id="sendBtn"
+            class="btn btn-primary">
+      Send
+    </button>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<script>
+  // Configuration from server
+  const firebaseConfig = {{{json firebaseConfig}}};
+  const requestId = "{{requestId}}";
+  const userEmail = "{{currentUser}}";
+
+  // Initialize Firebase
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+
+  console.log('Firebase config:', firebaseConfig);
+  console.log('Request ID:', requestId);
+  console.log('User Email:', userEmail);
+
+  const db = firebase.database();
+  const convRef = db.ref('conversations/' + requestId);
+  
+  console.log('Firebase database initialized');
+  console.log('Conversation reference:', convRef.toString());
+
+  // Test Firebase connection
+  db.ref('.info/connected').on('value', (snapshot) => {
+    if (snapshot.val() === true) {
+      console.log('Firebase connected successfully');
+    } else {
+      console.log('Firebase disconnected');
+    }
+  });
+
+  const chatBox = document.getElementById('chatBox');
+  const msgInput = document.getElementById('msgInput');
+  const sendBtn  = document.getElementById('sendBtn');
+  const testBtn  = document.getElementById('testBtn');
+
+  // Listen for new messages
+  convRef.on('child_added', snap => {
+    console.log('New message received:', snap.val());
+    const { sender, text, timestamp } = snap.val();
+    const msgEl = document.createElement('div');
+
+    const formattedTime = new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const isOwnMessage = sender === userEmail;
+
+    msgEl.classList.add('message-container', 'mb-2', 'd-flex', isOwnMessage ? 'justify-content-end' : 'justify-content-start');
+    
+    msgEl.innerHTML = `
+      <div class="message-bubble ${isOwnMessage ? 'own-message' : 'other-message'}">
+        <div class="message-text">${text}</div>
+        <div class="message-time">${formattedTime}</div>
+      </div>
+    `;
+    chatBox.appendChild(msgEl);
+    chatBox.scrollTop = chatBox.scrollHeight; // auto scroll
+  });
+
+  // Add error handling for Firebase connection
+  convRef.on('value', (snapshot) => {
+    console.log('Firebase connection successful, current data:', snapshot.val());
+  }, (error) => {
+    console.error('Firebase connection error:', error);
+    alert('Connection error: ' + error.message);
+  });
+
+  // Send a new message
+  sendBtn.addEventListener('click', () => {
+    const txt = msgInput.value.trim();
+    if (!txt) return;
+
+    console.log('Sending message:', { sender: userEmail, text: txt, timestamp: Date.now() });
+    console.log('Firebase reference:', convRef.toString());
+
+    convRef.push({
+      sender: userEmail,
+      text: txt,
+      timestamp: Date.now()
+    }).then(() => {
+      console.log('Message sent successfully');
+      msgInput.value = '';
+    }).catch((error) => {
+      console.error('Error sending message:', error);
+      alert('Failed to send message: ' + error.message);
+    });
+  });
+
+  // Send on Enter key
+  msgInput.addEventListener('keypress', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      sendBtn.click();
+    }
+  });
+
+  // Test button functionality
+  testBtn.addEventListener('click', () => {
+    console.log('Test button clicked');
+    const testMessage = {
+      sender: userEmail,
+      text: 'Test message - ' + new Date().toLocaleTimeString(),
+      timestamp: Date.now()
+    };
+    
+    console.log('Sending test message:', testMessage);
+    
+    convRef.push(testMessage).then(() => {
+      console.log('Test message sent successfully');
+      alert('Test message sent! Check console for details.');
+    }).catch((error) => {
+      console.error('Test message failed:', error);
+      alert('Test message failed: ' + error.message);
+    });
+  });
+</script>
