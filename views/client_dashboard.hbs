@@ -1,0 +1,334 @@
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-center mb-3">Client Dashboard</h2>
+            <p class="text-center text-muted">Overview of your repair requests and service history</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Requests</h5>
+                    <h2 class="mb-0">{{stats.total}}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Completed</h5>
+                    <h2 class="mb-0">{{stats.completed}}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Pending</h5>
+                    <h2 class="mb-0">{{stats.pending}}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Paid</h5>
+                    <h2 class="mb-0">{{stats.paid}}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Rated</h5>
+                    <h2 class="mb-0">{{stats.rated}}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card bg-dark text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Avg Time</h5>
+                    <h2 class="mb-0">{{stats.avgCompletionTime}}h</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <!-- Monthly Request Trends -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Monthly Request Trends</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Request Status Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Request Status Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Row -->
+    <div class="row mb-4">
+        <!-- Top Appliances -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Most Requested Appliances</h5>
+                </div>
+                <div class="card-body">
+                    {{#if topAppliances.length}}
+                        <div class="list-group list-group-flush">
+                            {{#each topAppliances}}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">{{this.appliance}}</span>
+                                    <span class="badge bg-primary rounded-pill">{{this.count}} requests</span>
+                                </div>
+                            {{/each}}
+                        </div>
+                    {{else}}
+                        <p class="text-muted text-center">No appliance data available</p>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Technicians -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Most Used Technicians</h5>
+                </div>
+                <div class="card-body">
+                    {{#if topTechnicians.length}}
+                        <div class="list-group list-group-flush">
+                            {{#each topTechnicians}}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">{{this.email}}</span>
+                                    <span class="badge bg-success rounded-pill">{{this.count}} jobs</span>
+                                </div>
+                            {{/each}}
+                        </div>
+                    {{else}}
+                        <p class="text-muted text-center">No technician data available</p>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Requests -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Requests</h5>
+                </div>
+                <div class="card-body">
+                    {{#if recentRequests.length}}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Appliance</th>
+                                        <th>Status</th>
+                                        <th>Technician</th>
+                                        <th>Date</th>
+                                        <th>Payment</th>
+                                        <th>Rating</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#each recentRequests}}
+                                        <tr>
+                                            <td>
+                                                <strong>{{this.appliance}}</strong>
+                                                {{#if this.description}}
+                                                    <br><small class="text-muted">{{this.description}}</small>
+                                                {{/if}}
+                                            </td>
+                                            <td>
+                                                {{#if (eq this.status "Pending")}}
+                                                    <span class="badge bg-warning">Pending</span>
+                                                {{else if (eq this.status "Accepted")}}
+                                                    <span class="badge bg-info">Accepted</span>
+                                                {{else if (eq this.status "Completed")}}
+                                                    <span class="badge bg-success">Completed</span>
+                                                {{else if (eq this.status "Rejected")}}
+                                                    <span class="badge bg-danger">Rejected</span>
+                                                {{else}}
+                                                    <span class="badge bg-secondary">{{this.status}}</span>
+                                                {{/if}}
+                                            </td>
+                                            <td>
+                                                {{#if this.technicianEmail}}
+                                                    {{this.technicianEmail}}
+                                                {{else}}
+                                                    <span class="text-muted">Not assigned</span>
+                                                {{/if}}
+                                            </td>
+                                            <td>
+                                                {{#if this.timestamp}}
+                                                    {{formatDate this.timestamp}}
+                                                {{else}}
+                                                    <span class="text-muted">No date</span>
+                                                {{/if}}
+                                            </td>
+                                            <td>
+                                                {{#if this.paid}}
+                                                    <span class="badge bg-success">Paid</span>
+                                                {{else if (eq this.status "Completed")}}
+                                                    <span class="badge bg-warning">Pending</span>
+                                                {{else}}
+                                                    <span class="badge bg-secondary">N/A</span>
+                                                {{/if}}
+                                            </td>
+                                            <td>
+                                                {{#if this.rated}}
+                                                    <span class="badge bg-success">Rated</span>
+                                                {{else if this.paid}}
+                                                    <span class="badge bg-warning">Pending</span>
+                                                {{else}}
+                                                    <span class="badge bg-secondary">N/A</span>
+                                                {{/if}}
+                                            </td>
+                                        </tr>
+                                    {{/each}}
+                                </tbody>
+                            </table>
+                        </div>
+                    {{else}}
+                        <div class="text-center text-muted">
+                            <i class="bi bi-inbox display-4"></i>
+                            <p class="mt-2">No requests found</p>
+                        </div>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Monthly Request Trends Chart
+const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+const monthlyChart = new Chart(monthlyCtx, {
+    type: 'line',
+    data: {
+        labels: [{{#each stats.monthlyData}}'{{this.month}}'{{#unless @last}},{{/unless}}{{/each}}],
+        datasets: [{
+            label: 'Total Requests',
+            data: [{{#each stats.monthlyData}}{{this.total}}{{#unless @last}},{{/unless}}{{/each}}],
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1,
+            fill: true
+        }, {
+            label: 'Completed',
+            data: [{{#each stats.monthlyData}}{{this.completed}}{{#unless @last}},{{/unless}}{{/each}}],
+            borderColor: 'rgb(40, 167, 69)',
+            backgroundColor: 'rgba(40, 167, 69, 0.2)',
+            tension: 0.1,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        }
+    }
+});
+
+// Request Status Distribution Chart
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+const statusChart = new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Completed', 'Pending', 'Accepted', 'Rejected'],
+        datasets: [{
+            data: [{{stats.completed}}, {{stats.pending}}, {{stats.accepted}}, {{stats.rejected}}],
+            backgroundColor: [
+                'rgba(40, 167, 69, 0.8)',
+                'rgba(255, 193, 7, 0.8)',
+                'rgba(0, 123, 255, 0.8)',
+                'rgba(220, 53, 69, 0.8)'
+            ],
+            borderColor: [
+                'rgba(40, 167, 69, 1)',
+                'rgba(255, 193, 7, 1)',
+                'rgba(0, 123, 255, 1)',
+                'rgba(220, 53, 69, 1)'
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+canvas {
+    max-height: 300px;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+</style>
+

@@ -1,0 +1,170 @@
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-center mb-3">Request Repair Service</h2>
+            <p class="text-center text-muted">Submit a new repair request for your appliances</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form action="/request" method="POST" id="requestForm">
+                        <div class="mb-3">
+                            <label for="appliance" class="form-label">Type of Appliance</label>
+                            <select name="appliance" class="form-control" id="appliance" required>
+                                <option value="">Select an appliance...</option>
+                                <option value="fridge">Fridge</option>
+                                <option value="washing_machine">Washing Machine</option>
+                                <option value="blender">Blender</option>
+                                <option value="cooker">Cooker</option>
+                                <option value="oven">Oven</option>
+                                <option value="ac">Air Conditioner</option>
+                                <option value="microwave">Microwave</option>
+                                <option value="dishwasher">Dishwasher</option>
+                                <option value="dryer">Dryer</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="technician" class="form-label">Preferred Technician</label>
+                            <select name="technician" class="form-control" id="technician" required>
+                                <option value="">Select a technician...</option>
+                                {{#each technicians}}
+                                    <option value="{{this.email}}">{{this.name}} - {{this.specialty}}</option>
+                                {{/each}}
+                            </select>
+                            <div class="form-text">Choose a technician based on their specialty</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Detailed Description of the Issue</label>
+                            <textarea
+                                id="description"
+                                name="description"
+                                rows="5"
+                                class="form-control"
+                                placeholder="Please provide a detailed description of the problem with your appliance. Include any error messages, unusual sounds, or behaviors you've noticed..."
+                                required
+                            ></textarea>
+                            <div class="form-text">The more details you provide, the better we can help you</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="urgency" class="form-label">Urgency Level</label>
+                            <select name="urgency" class="form-control" id="urgency">
+                                <option value="low">Low - Can wait a few days</option>
+                                <option value="medium" selected>Medium - Within 1-2 days</option>
+                                <option value="high">High - Same day service needed</option>
+                                <option value="emergency">Emergency - Immediate attention required</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="contactPhone" class="form-label">Contact Phone Number</label>
+                            <input type="tel" class="form-control" id="contactPhone" name="contactPhone" 
+                                   placeholder="07XXXXXXXX or 254XXXXXXXXX" required>
+                            <div class="form-text">For technician to contact you directly</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="preferredTime" class="form-label">Preferred Service Time</label>
+                            <select name="preferredTime" class="form-control" id="preferredTime">
+                                <option value="morning">Morning (8 AM - 12 PM)</option>
+                                <option value="afternoon" selected>Afternoon (12 PM - 5 PM)</option>
+                                <option value="evening">Evening (5 PM - 8 PM)</option>
+                                <option value="flexible">Flexible - Any time</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-tools me-2"></i>Submit Repair Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+(function() {
+    const form = document.getElementById('requestForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn ? submitBtn.textContent : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Submitting...';
+        }
+
+        try {
+            const formData = new FormData(form);
+            const body = new URLSearchParams(formData);
+
+            const res = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                },
+                body
+            });
+
+            if (!res.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            // Show success message
+            alert('✅ Request submitted successfully! A technician will contact you soon.');
+            form.reset();
+            
+            // Redirect to dashboard after a short delay
+            setTimeout(() => {
+                window.location.href = '/homeowner-dashboard';
+            }, 2000);
+
+        } catch (err) {
+            console.error('Submit failed:', err);
+            alert('❌ Failed to submit request. Please try again.');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+    });
+})();
+</script>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+</style>
