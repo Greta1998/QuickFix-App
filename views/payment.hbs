@@ -36,9 +36,6 @@
           <input type="hidden" name="method" id="payMethod" value="" />
 
           <div class="d-grid gap-2">
-            <button type="button" class="btn btn-outline-primary pay-option" data-method="Visa">
-              <i class="bi bi-credit-card me-2"></i> Visa
-            </button>
             <button type="button" class="btn btn-outline-success pay-option" data-method="Mpesa" data-bs-toggle="modal" data-bs-target="#mpesaModal">
               <i class="bi bi-phone me-2"></i> M-Pesa
             </button>
@@ -89,9 +86,6 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-warning me-2" id="testFormData">
-          <i class="bi bi-bug me-2"></i> Test Form Data
-        </button>
         <button type="button" class="btn btn-success" id="initiateMpesaPayment">
           <i class="bi bi-phone me-2"></i> Pay with M-Pesa
         </button>
@@ -131,7 +125,6 @@
     const payForm = document.getElementById('payForm');
     const mpesaForm = document.getElementById('mpesaForm');
     const initiateMpesaBtn = document.getElementById('initiateMpesaPayment');
-    const testFormBtn = document.getElementById('testFormData');
 
     // Handle payment modal
     if (payModal) {
@@ -171,47 +164,6 @@
       });
     });
 
-    // Test form data button
-    if (testFormBtn) {
-      testFormBtn.addEventListener('click', function() {
-        const formData = new FormData(mpesaForm);
-        const phoneNumber = formData.get('phoneNumber');
-        const amount = formData.get('amount');
-        let requestId = formData.get('requestId');
-        
-        // Fallback methods
-        if (!requestId) {
-          requestId = document.getElementById('mpesaRequestId').value;
-        }
-        if (!requestId) {
-          requestId = document.getElementById('payRequestId').value;
-        }
-
-        const debugInfo = {
-          formData: {
-            phoneNumber: phoneNumber,
-            amount: amount,
-            requestId: requestId
-          },
-          directValues: {
-            mpesaRequestId: document.getElementById('mpesaRequestId').value,
-            payRequestId: document.getElementById('payRequestId').value,
-            phoneNumberInput: document.getElementById('phoneNumber').value,
-            amountInput: document.getElementById('amount').value
-          },
-          validation: {
-            hasPhoneNumber: !!phoneNumber,
-            hasAmount: !!amount,
-            hasRequestId: !!requestId,
-            allFieldsPresent: !!(phoneNumber && amount && requestId)
-          }
-        };
-
-        console.log('=== FORM DEBUG INFO ===');
-        console.log(debugInfo);
-        alert(`Form Data Test:\n\nPhone: ${phoneNumber || 'MISSING'}\nAmount: ${amount || 'MISSING'}\nRequest ID: ${requestId || 'MISSING'}\n\nCheck console for full details.`);
-      });
-    }
 
     // Handle M-Pesa payment initiation
     if (initiateMpesaBtn) {
