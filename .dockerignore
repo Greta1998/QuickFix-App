@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.nyc_output
+coverage
+.env.local
+.env.production
+.env.staging
+firebase-debug.log
+firebase-config.json
+firebase.json
+*.log
+.DS_Store
+Thumbs.db
