@@ -5,7 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/styles.css"> 
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .input-group-text {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            font-weight: 500;
+        }
+        .form-control.is-valid {
+            border-color: #198754;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+        }
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        .invalid-feedback {
+            display: block;
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+    </style> 
 </head>
 <body>
     <div class="container mt-5" style="max-width: 400px;">
@@ -27,31 +48,18 @@
             <div class="form-group">
                 <label for="phone">Phone Number</label>
                 <div class="input-group">
-                    <input type="tel" class="form-control" id="phone" name="phone" 
-                           placeholder="07XXXXXXXX" maxlength="10" pattern="[0-9]{10}"required>
-                    <div class="input-group-append">
-                        <button type="button" class="btn btn-outline-primary" id="sendOTP">
-                            <i class="bi bi-send"></i> Send OTP
-                        </button>
-                    </div>
+                    <span class="input-group-text">+254</span>
+                    <input type="tel" 
+                           class="form-control" 
+                           id="phone" 
+                           name="phone" 
+                           placeholder="7XXXXXXXX" 
+                           maxlength="9" 
+                           pattern="[0-9]{9}" 
+                           required>
                 </div>
-                <small class="form-text text-muted">We'll send a verification code to this number</small>
-            </div>
-            <div class="form-group" id="otpSection" style="display: none;">
-                <label for="otp">Verification Code</label>
-                <div class="input-group">
-                    <input type="text" class="form-control" id="otp" name="otp" 
-                           placeholder="Enter 6-digit code" maxlength="6">
-                    <div class="input-group-append">
-                        <button type="button" class="btn btn-outline-success" id="verifyOTP">
-                            <i class="bi bi-check-circle"></i> Verify
-                        </button>
-                    </div>
-                </div>
-                <small class="form-text">
-                    <span id="otpStatus">Enter the code sent to your phone</span>
-                    <span id="otpTimer" class="text-muted ms-2"></span>
-                </small>
+                <div class="form-text text-muted">Enter your 9-digit phone number</div>
+                <div id="phoneError" class="invalid-feedback"></div>
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
@@ -137,109 +145,37 @@ document.addEventListener('DOMContentLoaded', function() {
     const technicianInfo = document.getElementById('technicianInfo');
     const submitBtn = document.getElementById('submitBtn');
     const form = document.getElementById('signupForm');
-    let otpTimer = null;
-    let otpVerified = false;
-
-    // OTP functionality
-    document.getElementById('sendOTP').addEventListener('click', async function() {
-        const phoneInput = document.getElementById('phone');
-        const phone = phoneInput.value.trim();
+    // Phone number validation
+    document.getElementById('phone').addEventListener('input', function() {
+        const phoneInput = this;
+        const phoneValue = phoneInput.value;
+        const errorDiv = document.getElementById('phoneError');
         
-        if (!phone) {
-            alert('Please enter your phone number first');
-            return;
-        }
-
-        const button = this;
-        const originalText = button.innerHTML;
+        // Remove any non-numeric characters
+        const cleanValue = phoneValue.replace(/[^0-9]/g, '');
+        phoneInput.value = cleanValue;
         
-        button.disabled = true;
-        button.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
-
-        try {
-            const response = await fetch('/api/send-otp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone: phone })
-            });
-
-            const result = await response.json();
-            
-            if (result.success) {
-                document.getElementById('otpSection').style.display = 'block';
-                document.getElementById('otpStatus').textContent = 'Code sent! Check your phone.';
-                startOTPTimer();
-            } else {
-                alert('Failed to send OTP: ' + result.message);
-            }
-        } catch (error) {
-            console.error('OTP send error:', error);
-            alert('Failed to send OTP. Please try again.');
-        } finally {
-            button.disabled = false;
-            button.innerHTML = originalText;
+        // Validate Kenyan phone number format
+        const isValid = validateKenyanPhone(cleanValue);
+        
+        if (cleanValue.length > 0 && !isValid) {
+            phoneInput.classList.add('is-invalid');
+            phoneInput.classList.remove('is-valid');
+            errorDiv.textContent = 'Please enter a valid Kenyan phone number (7XXXXXXXX)';
+        } else if (cleanValue.length === 9 && isValid) {
+            phoneInput.classList.add('is-valid');
+            phoneInput.classList.remove('is-invalid');
+            errorDiv.textContent = '';
+        } else if (cleanValue.length === 0) {
+            phoneInput.classList.remove('is-valid', 'is-invalid');
+            errorDiv.textContent = '';
         }
     });
 
-    document.getElementById('verifyOTP').addEventListener('click', async function() {
-        const phone = document.getElementById('phone').value.trim();
-        const otp = document.getElementById('otp').value.trim();
-        
-        if (!phone || !otp) {
-            alert('Please enter both phone number and OTP');
-            return;
-        }
-
-        const button = this;
-        const originalText = button.innerHTML;
-        
-        button.disabled = true;
-        button.innerHTML = '<i class="bi bi-hourglass-split"></i> Verifying...';
-
-        try {
-            const response = await fetch('/api/verify-otp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone: phone, otp: otp })
-            });
-
-            const result = await response.json();
-            
-            if (result.success) {
-                otpVerified = true;
-                document.getElementById('otpStatus').textContent = '✅ Phone verified successfully!';
-                document.getElementById('otpStatus').className = 'text-success';
-                button.innerHTML = '<i class="bi bi-check-circle"></i> Verified';
-                button.className = 'btn btn-success';
-                clearInterval(otpTimer);
-            } else {
-                alert('OTP verification failed: ' + result.message);
-            }
-        } catch (error) {
-            console.error('OTP verify error:', error);
-            alert('Failed to verify OTP. Please try again.');
-        } finally {
-            button.disabled = false;
-            if (!otpVerified) {
-                button.innerHTML = originalText;
-            }
-        }
-    });
-
-    function startOTPTimer() {
-        let timeLeft = 300; // 5 minutes
-        otpTimer = setInterval(() => {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            document.getElementById('otpTimer').textContent = `(${minutes}:${seconds.toString().padStart(2, '0')} remaining)`;
-            
-            if (timeLeft <= 0) {
-                clearInterval(otpTimer);
-                document.getElementById('otpTimer').textContent = '(Expired)';
-                document.getElementById('otpStatus').textContent = 'OTP expired. Please request a new one.';
-            }
-            timeLeft--;
-        }, 1000);
+    function validateKenyanPhone(phoneNumber) {
+        // Kenyan mobile numbers start with 7, 1, or 0
+        const kenyanPhoneRegex = /^[701][0-9]{8}$/;
+        return kenyanPhoneRegex.test(phoneNumber);
     }
 
     // Show/hide technician fields based on role selection
@@ -259,9 +195,14 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // Check if OTP is verified
-        if (!otpVerified) {
-            alert('Please verify your phone number with OTP before submitting');
+        // Validate phone number before submission
+        const phoneInput = document.getElementById('phone');
+        const phoneValue = phoneInput.value.trim();
+        
+        if (phoneValue.length !== 9 || !validateKenyanPhone(phoneValue)) {
+            phoneInput.classList.add('is-invalid');
+            document.getElementById('phoneError').textContent = 'Please enter a valid Kenyan phone number';
+            phoneInput.focus();
             return;
         }
 
