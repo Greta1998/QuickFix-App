@@ -25,6 +25,35 @@
                 <input type="email" name="email" class="form-control" id="email" required>
             </div>
             <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <div class="input-group">
+                    <input type="tel" class="form-control" id="phone" name="phone" 
+                           placeholder="07XXXXXXXX" maxlength="10" pattern="[0-9]{10}"required>
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-outline-primary" id="sendOTP">
+                            <i class="bi bi-send"></i> Send OTP
+                        </button>
+                    </div>
+                </div>
+                <small class="form-text text-muted">We'll send a verification code to this number</small>
+            </div>
+            <div class="form-group" id="otpSection" style="display: none;">
+                <label for="otp">Verification Code</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="otp" name="otp" 
+                           placeholder="Enter 6-digit code" maxlength="6">
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-outline-success" id="verifyOTP">
+                            <i class="bi bi-check-circle"></i> Verify
+                        </button>
+                    </div>
+                </div>
+                <small class="form-text">
+                    <span id="otpStatus">Enter the code sent to your phone</span>
+                    <span id="otpTimer" class="text-muted ms-2"></span>
+                </small>
+            </div>
+            <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" name="password" class="form-control" id="password" required>
             </div>
@@ -39,10 +68,6 @@
 
             <!-- Technician-specific fields (hidden by default) -->
             <div id="technicianFields" style="display: none;">
-                <div class="form-group">
-                    <label for="phone">Phone Number</label>
-                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="07XXXXXXXX">
-                </div>
                 <div class="form-group">
                     <label for="location">Location</label>
                     <input type="text" class="form-control" id="location" name="location" placeholder="e.g., Nairobi, Westlands">
@@ -81,17 +106,6 @@
                     <input type="text" class="form-control" id="idNumber" name="idNumber" placeholder="Enter your ID number">
                 </div>
                 <div class="form-group">
-                    <label for="availability">Availability</label>
-                    <select class="form-control" id="availability" name="availability">
-                        <option value="">Select availability...</option>
-                        <option value="full_time">Full Time</option>
-                        <option value="part_time">Part Time</option>
-                        <option value="weekends">Weekends Only</option>
-                        <option value="evenings">Evenings Only</option>
-                        <option value="emergency">Emergency Services</option>
-                    </select>
-                </div>
-                <div class="form-group">
                     <label for="serviceRadius">Service Radius (km)</label>
                     <select class="form-control" id="serviceRadius" name="serviceRadius">
                         <option value="">Select radius...</option>
@@ -123,6 +137,110 @@ document.addEventListener('DOMContentLoaded', function() {
     const technicianInfo = document.getElementById('technicianInfo');
     const submitBtn = document.getElementById('submitBtn');
     const form = document.getElementById('signupForm');
+    let otpTimer = null;
+    let otpVerified = false;
+
+    // OTP functionality
+    document.getElementById('sendOTP').addEventListener('click', async function() {
+        const phoneInput = document.getElementById('phone');
+        const phone = phoneInput.value.trim();
+        
+        if (!phone) {
+            alert('Please enter your phone number first');
+            return;
+        }
+
+        const button = this;
+        const originalText = button.innerHTML;
+        
+        button.disabled = true;
+        button.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
+
+        try {
+            const response = await fetch('/api/send-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: phone })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                document.getElementById('otpSection').style.display = 'block';
+                document.getElementById('otpStatus').textContent = 'Code sent! Check your phone.';
+                startOTPTimer();
+            } else {
+                alert('Failed to send OTP: ' + result.message);
+            }
+        } catch (error) {
+            console.error('OTP send error:', error);
+            alert('Failed to send OTP. Please try again.');
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    });
+
+    document.getElementById('verifyOTP').addEventListener('click', async function() {
+        const phone = document.getElementById('phone').value.trim();
+        const otp = document.getElementById('otp').value.trim();
+        
+        if (!phone || !otp) {
+            alert('Please enter both phone number and OTP');
+            return;
+        }
+
+        const button = this;
+        const originalText = button.innerHTML;
+        
+        button.disabled = true;
+        button.innerHTML = '<i class="bi bi-hourglass-split"></i> Verifying...';
+
+        try {
+            const response = await fetch('/api/verify-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: phone, otp: otp })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                otpVerified = true;
+                document.getElementById('otpStatus').textContent = '✅ Phone verified successfully!';
+                document.getElementById('otpStatus').className = 'text-success';
+                button.innerHTML = '<i class="bi bi-check-circle"></i> Verified';
+                button.className = 'btn btn-success';
+                clearInterval(otpTimer);
+            } else {
+                alert('OTP verification failed: ' + result.message);
+            }
+        } catch (error) {
+            console.error('OTP verify error:', error);
+            alert('Failed to verify OTP. Please try again.');
+        } finally {
+            button.disabled = false;
+            if (!otpVerified) {
+                button.innerHTML = originalText;
+            }
+        }
+    });
+
+    function startOTPTimer() {
+        let timeLeft = 300; // 5 minutes
+        otpTimer = setInterval(() => {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('otpTimer').textContent = `(${minutes}:${seconds.toString().padStart(2, '0')} remaining)`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(otpTimer);
+                document.getElementById('otpTimer').textContent = '(Expired)';
+                document.getElementById('otpStatus').textContent = 'OTP expired. Please request a new one.';
+            }
+            timeLeft--;
+        }, 1000);
+    }
 
     // Show/hide technician fields based on role selection
     roleSelect.addEventListener('change', function() {
@@ -140,6 +258,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form submission handling
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
+
+        // Check if OTP is verified
+        if (!otpVerified) {
+            alert('Please verify your phone number with OTP before submitting');
+            return;
+        }
 
         const submitBtn = form.querySelector('button[type="submit"]');
         const originalText = submitBtn ? submitBtn.textContent : '';

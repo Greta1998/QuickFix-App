@@ -29,15 +29,69 @@
                             </select>
                         </div>
 
+                        <!-- Location Input -->
+                        <div class="mb-3">
+                            <label for="userLocation" class="form-label">Your Location</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="userLocation" name="userLocation" 
+                                       placeholder="Enter your address or city" required>
+                                <button type="button" class="btn btn-outline-secondary" id="getCurrentLocation">
+                                    <i class="bi bi-geo-alt"></i> Use Current Location
+                                </button>
+                            </div>
+                            <div class="form-text">This helps us find technicians near you</div>
+                        </div>
+
+                        <!-- Advanced Search Filters -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="specialtyFilter" class="form-label">Specialty</label>
+                                <select class="form-select" id="specialtyFilter">
+                                    <option value="">All Specialties</option>
+                                    {{#each searchFilters.specialties}}
+                                        <option value="{{this}}">{{this}}</option>
+                                    {{/each}}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="distanceFilter" class="form-label">Max Distance</label>
+                                <select class="form-select" id="distanceFilter">
+                                    {{#each searchFilters.distanceRanges}}
+                                        <option value="{{max}}" {{#if (eq max 50)}}selected{{/if}}>{{label}}</option>
+                                    {{/each}}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Search and Filter Buttons -->
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-outline-primary me-2" id="searchTechnicians">
+                                <i class="bi bi-search"></i> Search Technicians
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="clearFilters">
+                                <i class="bi bi-x-circle"></i> Clear Filters
+                            </button>
+                        </div>
+
+                        <!-- Technician Selection -->
                         <div class="mb-3">
                             <label for="technician" class="form-label">Preferred Technician</label>
-                            <select name="technician" class="form-control" id="technician" required>
-                                <option value="">Select a technician...</option>
-                                {{#each technicians}}
-                                    <option value="{{this.email}}">{{this.name}} - {{this.specialty}}</option>
-                                {{/each}}
-                            </select>
-                            <div class="form-text">Choose a technician based on their specialty</div>
+                            <div id="technicianResults">
+                                <select name="technician" class="form-control" id="technician" required>
+                                    <option value="">Select a technician...</option>
+                                    {{#each technicians}}
+                                        <option value="{{this.email}}" data-distance="{{this.distance}}" data-rating="{{this.rating}}">
+                                            {{this.name}}
+                                            {{#if this.rating}}
+                                                - {{#repeat this.rating}}★{{/repeat}}{{#repeat (sub 5 this.rating)}}☆{{/repeat}} ({{this.rating}}/5)
+                                            {{else}}
+                                                - No ratings yet
+                                            {{/if}}
+                                        </option>
+                                    {{/each}}
+                                </select>
+                            </div>
+                            <div class="form-text">Technicians are sorted by distance (nearest first) and rating</div>
                         </div>
 
                         <div class="mb-3">
@@ -66,7 +120,7 @@
                         <div class="mb-3">
                             <label for="contactPhone" class="form-label">Contact Phone Number</label>
                             <input type="tel" class="form-control" id="contactPhone" name="contactPhone" 
-                                   placeholder="07XXXXXXXX or 254XXXXXXXXX" required>
+                                   placeholder="07XXXXXXXX" maxlength="10" pattern="[0-9]{10}"required>
                             <div class="form-text">For technician to contact you directly</div>
                         </div>
 
@@ -98,6 +152,195 @@
     const form = document.getElementById('requestForm');
     if (!form) return;
 
+    let userCoordinates = null;
+
+    // Get current location
+    document.getElementById('getCurrentLocation').addEventListener('click', async function() {
+        const locationInput = document.getElementById('userLocation');
+        const button = this;
+        
+        button.disabled = true;
+        button.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Getting Location...';
+
+        try {
+            if (navigator.geolocation) {
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    });
+                });
+
+                userCoordinates = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+
+                // Reverse geocode to get address
+                const address = await reverseGeocode(userCoordinates.lat, userCoordinates.lng);
+                locationInput.value = address;
+                
+                // Search for nearby technicians
+                await searchTechnicians();
+                
+            } else {
+                alert('Geolocation is not supported by this browser');
+            }
+        } catch (error) {
+            console.error('Location error:', error);
+            alert('Unable to get your location. Please enter it manually.');
+        } finally {
+            button.disabled = false;
+            button.innerHTML = '<i class="bi bi-geo-alt"></i> Use Current Location';
+        }
+    });
+
+    // Search technicians based on filters
+    document.getElementById('searchTechnicians').addEventListener('click', async function() {
+        const button = this;
+        const originalText = button.innerHTML;
+        
+        // Show loading state
+        button.disabled = true;
+        button.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Searching...';
+        
+        try {
+            await searchTechnicians();
+        } finally {
+            // Reset button
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    });
+
+    // Clear filters
+    document.getElementById('clearFilters').addEventListener('click', function() {
+        document.getElementById('specialtyFilter').value = '';
+        document.getElementById('distanceFilter').value = '50';
+        document.getElementById('userLocation').value = '';
+        userCoordinates = null;
+        
+        // Reset technician dropdown
+        const technicianSelect = document.getElementById('technician');
+        technicianSelect.innerHTML = '<option value="">Select a technician...</option>';
+    });
+
+
+    // Search technicians function
+    async function searchTechnicians() {
+        console.log('🔍 Starting technician search...');
+        
+        const specialty = document.getElementById('specialtyFilter').value;
+        const maxDistance = document.getElementById('distanceFilter').value;
+        const location = document.getElementById('userLocation').value;
+        
+        console.log('Search parameters:', { specialty, maxDistance, location, userCoordinates });
+
+        // Get coordinates if location is provided
+        let coordinates = userCoordinates;
+        if (!coordinates && location) {
+            try {
+                const response = await fetch('/api/get-location', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ address: location })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    coordinates = data.coordinates;
+                }
+            } catch (error) {
+                console.error('Geocoding error:', error);
+            }
+        }
+
+        try {
+            const response = await fetch('/api/search-technicians', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    specialty,
+                    userLat: coordinates?.lat,
+                    userLng: coordinates?.lng,
+                    maxDistance: parseInt(maxDistance),
+                    minRating: 0,
+                })
+            });
+
+            const data = await response.json();
+            console.log('Search response:', data);
+            
+            if (data.success) {
+                console.log(`Found ${data.technicians.length} technicians`);
+                console.log('Technicians data:', data.technicians);
+                updateTechnicianDropdown(data.technicians);
+            } else {
+                console.error('Search failed:', data.error);
+                alert('Search failed: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Search error:', error);
+            alert('Search error: ' + error.message);
+        }
+    }
+
+    // Update technician dropdown with search results
+    function updateTechnicianDropdown(technicians) {
+        const select = document.getElementById('technician');
+        select.innerHTML = '<option value="">Select a technician...</option>';
+        
+        technicians.forEach(tech => {
+            const option = document.createElement('option');
+            option.value = tech.email;
+            
+            // Round rating to nearest tenth
+            const roundedRating = tech.rating ? Math.round(tech.rating * 10) / 10 : 0;
+            
+            if (roundedRating > 0) {
+                const stars = '★'.repeat(Math.floor(roundedRating)) + '☆'.repeat(5 - Math.floor(roundedRating));
+                option.textContent = `${tech.name} - ${stars} (${roundedRating}/5)`;
+            } else {
+                option.textContent = `${tech.name} - No ratings yet`;
+            }
+            
+            select.appendChild(option);
+        });
+    }
+
+    // Reverse geocode coordinates to address
+    async function reverseGeocode(lat, lng) {
+        try {
+            // Use a more stable approach - determine location based on coordinates
+            // This is a simplified version - in production, use Google Maps Geocoding API
+            
+            // Kenya coordinates bounds (approximate)
+            if (lat >= -4.7 && lat <= 5.5 && lng >= 33.9 && lng <= 41.9) {
+                // Determine region based on coordinates
+                if (lat >= -1.5 && lat <= -0.5 && lng >= 36.5 && lng <= 37.5) {
+                    return 'Nairobi, Kenya';
+                } else if (lat >= -4.2 && lat <= -3.8 && lng >= 39.3 && lng <= 40.0) {
+                    return 'Mombasa, Kenya';
+                } else if (lat >= -0.2 && lat <= 0.2 && lng >= 34.5 && lng <= 35.0) {
+                    return 'Kisumu, Kenya';
+                } else if (lat >= -0.4 && lat <= -0.2 && lng >= 35.8 && lng <= 36.4) {
+                    return 'Nakuru, Kenya';
+                } else if (lat >= 0.3 && lat <= 0.7 && lng >= 35.1 && lng <= 35.4) {
+                    return 'Eldoret, Kenya';
+                } else {
+                    // Default to nearest major city
+                    return 'Nairobi, Kenya';
+                }
+            } else {
+                // Outside Kenya - use coordinates
+                return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            }
+        } catch (error) {
+            console.error('Reverse geocoding error:', error);
+            return 'Location detected';
+        }
+    }
+
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -111,6 +354,12 @@
         try {
             const formData = new FormData(form);
             const body = new URLSearchParams(formData);
+
+            // Add location coordinates if available
+            if (userCoordinates) {
+                body.append('userLat', userCoordinates.lat);
+                body.append('userLng', userCoordinates.lng);
+            }
 
             const res = await fetch(form.action, {
                 method: 'POST',
